@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="refresh" content="2" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>VPP Smart Meter — Live Status</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --card: #161b22;
+      --border: #30363d;
+      --accent: #58a6ff;
+      --green: #3fb950;
+      --yellow: #d29922;
+      --text: #c9d1d9;
+      --muted: #8b949e;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem 1rem;
+    }
+    header {
+      width: 100%;
+      max-width: 900px;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    .pulse-dot {
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 0 0 rgba(63,185,80,.4);
+      animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+      0%   { box-shadow: 0 0 0 0   rgba(63,185,80,.5); }
+      70%  { box-shadow: 0 0 0 10px rgba(63,185,80,0); }
+      100% { box-shadow: 0 0 0 0   rgba(63,185,80,0); }
+    }
+    h1 { font-size: 1.4rem; font-weight: 600; color: var(--accent); }
+    .subtitle { font-size: .85rem; color: var(--muted); margin-top: .2rem; }
+    .badge {
+      margin-left: auto;
+      background: rgba(63,185,80,.15);
+      color: var(--green);
+      border: 1px solid rgba(63,185,80,.35);
+      border-radius: 20px;
+      padding: .25rem .75rem;
+      font-size: .8rem;
+      font-weight: 600;
+      letter-spacing: .05em;
+    }
+
+    /* ── Metric Cards ── */
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem;
+      width: 100%;
+      max-width: 900px;
+      margin-bottom: 2rem;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem 1.25rem;
+      transition: border-color .2s;
+    }
+    .card:hover { border-color: var(--accent); }
+    .card-label { font-size: .72rem; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+    .card-val   { font-size: 1.5rem; font-weight: 700; margin-top: .3rem; color: var(--accent); }
+    .card-unit  { font-size: .8rem; color: var(--muted); }
+
+    /* ── Raw JSON panel ── */
+    .panel {
+      width: 100%; max-width: 900px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .panel-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: .75rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      font-size: .85rem; color: var(--muted);
+    }
+    .topic-tag {
+      background: rgba(88,166,255,.12);
+      color: var(--accent);
+      border: 1px solid rgba(88,166,255,.3);
+      border-radius: 4px;
+      padding: .15rem .55rem;
+      font-size: .78rem;
+      font-family: monospace;
+    }
+    pre {
+      padding: 1.25rem;
+      overflow-x: auto;
+      font-family: 'Cascadia Code', 'Fira Code', monospace;
+      font-size: .82rem;
+      line-height: 1.6;
+      white-space: pre;
+      color: var(--text);
+    }
+    .key   { color: #79c0ff; }
+    .str   { color: #a5d6ff; }
+    .num   { color: #f2cc60; }
+    .bool  { color: #ff7b72; }
+    footer {
+      margin-top: 2rem;
+      font-size: .78rem;
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="pulse-dot"></div>
+    <div>
+      <h1>VPP Smart Meter — Live Telemetry</h1>
+      <div class="subtitle">Mumbai Campus · Node 01 &nbsp;|&nbsp; Auto-refreshes every 2 s</div>
+    </div>
+    <span class="badge">ONLINE</span>
+  </header>
+
+  {% if payload %}
+  <!-- Quick-glance metric cards -->
+  <div class="cards">
+    <div class="card">
+      <div class="card-label">Voltage</div>
+      <div class="card-val">{{ "%.2f"|format(payload.grid_state.voltage_v) }}<span class="card-unit"> V</span></div>
+    </div>
+    <div class="card">
+      <div class="card-label">Current</div>
+      <div class="card-val">{{ "%.2f"|format(payload.grid_state.current_a) }}<span class="card-unit"> A</span></div>
+    </div>
+    <div class="card">
+      <div class="card-label">Power Factor</div>
+      <div class="card-val">{{ "%.3f"|format(payload.grid_state.power_factor) }}</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Load</div>
+      <div class="card-val">{{ "%.2f"|format(payload.energy_flow.load_kw) }}<span class="card-unit"> kW</span></div>
+    </div>
+    <div class="card">
+      <div class="card-label">Solar Gen</div>
+      <div class="card-val">{{ "%.2f"|format(payload.energy_flow.solar_gen_kw) }}<span class="card-unit"> kW</span></div>
+    </div>
+    <div class="card">
+      <div class="card-label">Wind Gen</div>
+      <div class="card-val">{{ "%.2f"|format(payload.energy_flow.wind_gen_kw) }}<span class="card-unit"> kW</span></div>
+    </div>
+    <div class="card">
+      <div class="card-label">Grid Supply</div>
+      <div class="card-val">{{ "%.2f"|format(payload.energy_flow.grid_supply_kw) }}<span class="card-unit"> kW</span></div>
+    </div>
+    <div class="card">
+      <div class="card-label">V Fluctuation</div>
+      <div class="card-val">{{ "%.3f"|format(payload.grid_state.voltage_fluctuation) }}<span class="card-unit"> %</span></div>
+    </div>
+  </div>
+
+  <!-- Full raw JSON -->
+  <div class="panel">
+    <div class="panel-header">
+      <span>Last Published Payload</span>
+      <span class="topic-tag">vpp/telemetry/main_bus</span>
+    </div>
+    <pre>{{ raw_json }}</pre>
+  </div>
+
+  {% else %}
+  <div class="panel" style="padding:2rem; text-align:center; color:var(--muted);">
+    ⏳ Waiting for the first telemetry row to be published…
+  </div>
+  {% endif %}
+
+  <footer>Row {{ row_index }} of {{ total_rows }} &nbsp;·&nbsp; MQTT broker: localhost:1883</footer>
+</body>
+</html>
